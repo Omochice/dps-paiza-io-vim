@@ -24,7 +24,7 @@ async function create(
     body: JSON.stringify(params),
     method: "POST",
   });
-  return res;
+  return res.json();
 }
 
 async function getStatus(id: number) {
@@ -32,7 +32,7 @@ async function getStatus(id: number) {
   const res = await fetch(url, {
     body: JSON.stringify({ id: id }),
   });
-  return res;
+  return res.json();
 }
 
 async function getDetails(id: number) {
@@ -40,7 +40,7 @@ async function getDetails(id: number) {
   const res = await fetch(url, {
     body: JSON.stringify({ id: id }),
   });
-  return res;
+  return res.json();
 }
 
 export async function main(denops: Denops): Promise<void> {
