@@ -4,6 +4,10 @@ import * as vars from "https://deno.land/x/denops_std@v1.0.0-beta.0/variable/mod
 import { ensureNumber } from "https://deno.land/x/unknownutil@v0.1.1/mod.ts";
 
 const baseUrl = "https://api.paiza.io/";
+const config = {
+  "bufname": "paizaIO://output",
+  "filetype": "paizaIO",
+};
 
 // async function paizaIO(
 //   sourceCode: string | string[],
@@ -152,20 +156,35 @@ export async function main(denops: Denops): Promise<void> {
         }
       })();
 
-      const winwidth =  await denops.eval("winwidth(0)");
+      const bufexists =
+        (await denops.eval(`bufexists("${config["bufname"]}")`)) 
+      console.log(bufexists)
+      if (bufexists) {
+        const bufnr = await denops.eval(
+          `bufnr("^${config["bufname"]}$")`,
+        ) as number;
+        const wins = await denops.eval(`win_findbuf(${bufnr})`) as number[];
+        const tabnr = await denops.eval("tabpagenr") as number;
+        const ww = await denops.eval(`filter(map(${wins}, "win_id2tabwin(v:val)"), "v:val[0] is# ${tabnr}")`)
+        console.log(bufnr, wins, tabnr, ww)
+      }
+
+      const winwidth = await denops.eval("winwidth(0)");
       const winheight = await denops.eval("winheight(0)");
       ensureNumber(winwidth);
       ensureNumber(winheight);
       const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
 
-      await execute(denops, `${opener} new`);
+      await execute(denops, `${opener} ${config["bufname"]}`);
       await denops.call("setline", 1, content);
       await execute(
         denops,
         `
         setlocal bufhidden=wipe buftype=nofile
         setlocal nobackup noswapfile
-        serlocal nomodified nomodifiable
+        setlocal nomodified nomodifiable
+        setlocal fileformat=unix
+        setlocal filetype=paizaIO
         `,
       );
 
