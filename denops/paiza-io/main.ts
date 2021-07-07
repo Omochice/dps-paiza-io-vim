@@ -119,16 +119,13 @@ export async function main(denops: Denops): Promise<void> {
         lines.join("\n"),
         ftList[filetype] || filetype,
       );
-      console.log(createStatus);
       const runID = createStatus["id"];
       const content: string[] = await (async () => {
         while (true) {
           const runStatus = await getStatus(runID);
-          console.log(runStatus);
 
           if (runStatus["status"] === "completed" || "error" in runStatus) {
             const details = await getDetails(createStatus["id"]);
-            console.log(details);
 
             // build error
             if (details["build_result"] === "failure") {
