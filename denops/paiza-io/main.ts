@@ -1,6 +1,7 @@
 import { Denops } from "https://deno.land/x/denops_std@v1.0.0-beta.0/mod.ts";
 import { execute } from "https://deno.land/x/denops_std@v1.0.0-beta.0/helper/mod.ts";
 import * as vars from "https://deno.land/x/denops_std@v1.0.0-beta.0/variable/mod.ts";
+import { ensureNumber } from "https://deno.land/x/unknownutil@v0.1.1/mod.ts";
 
 const baseUrl = "https://api.paiza.io/";
 
@@ -154,7 +155,13 @@ export async function main(denops: Denops): Promise<void> {
         }
       })();
 
-      await execute(denops, "vsplit new");
+      const winwidth =  await denops.eval("winwidth(0)");
+      const winheight = await denops.eval("winheight(0)");
+      ensureNumber(winwidth);
+      ensureNumber(winheight);
+      const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
+
+      await execute(denops, `${opener} new`);
       await denops.call("setline", 1, content);
       await execute(
         denops,
