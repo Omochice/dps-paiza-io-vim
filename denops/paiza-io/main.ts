@@ -1,6 +1,6 @@
-import { Denops } from "https://deno.land/x/denops_std@v1.0.0-beta.0/mod.ts";
-import { execute } from "https://deno.land/x/denops_std@v1.0.0-beta.0/helper/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v1.0.0-beta.0/variable/mod.ts";
+import { Denops } from "https://deno.land/x/denops_std@v1.0.0-beta.2/mod.ts";
+import { execute } from "https://deno.land/x/denops_std@v1.0.0-beta.2/helper/mod.ts";
+import * as vars from "https://deno.land/x/denops_std@v1.0.0-beta.2/variable/mod.ts";
 import { ensureNumber } from "https://deno.land/x/unknownutil@v0.1.1/mod.ts";
 
 const baseUrl = "https://api.paiza.io/";
@@ -53,8 +53,6 @@ async function create(
   const url = baseUrl + "runners/create" + "?" +
     new URLSearchParams(filterUndefinded(params));
   const res = await fetch(url, {
-    // body: JSON.stringify(filterUndefinded(params)),
-    // body: new URLSearchParams(filterUndefinded(params)),
     method: "POST",
   });
   return res.json();
@@ -85,6 +83,9 @@ export async function main(denops: Denops): Promise<void> {
       const lastLine = await denops.call("line", "$") as number;
       const lines = await denops.call("getline", 1, lastLine) as string[];
       const filetype = await denops.eval("&filetype") as string;
+      const winwidth = await denops.eval("winwidth(0)") as number;
+      const winheight = await denops.eval("winheight(0)") as number;
+      const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
       const ftList: Record<string, string> = {
         c: "c",
         cpp: "cpp",
@@ -124,69 +125,81 @@ export async function main(denops: Denops): Promise<void> {
         ftList[filetype] || filetype,
       );
       const runID = createStatus["id"];
-      const content: string[] = await (async () => {
-        while (true) {
-          const runStatus = await getStatus(runID);
+      let content: string[];
 
-          if (runStatus["status"] === "completed" || "error" in runStatus) {
-            const details = await getDetails(createStatus["id"]);
+      while (true) {
+        const runStatus = await getStatus(runID);
 
-            // build error
-            if (details["build_result"] === "failure") {
-              return details["build_stdout"].split("\n").concat(
-                details["build_stderr"].split("\n"),
-              );
-            }
+        if (runStatus["status"] === "completed" || "error" in runStatus) {
+          const details = await getDetails(createStatus["id"]);
 
-            const result = details["result"];
-            if (result === "success" || result === "faulure") {
-              // success execution
-              // execution error
-              const stdout = details["stdout"].split("\n");
-              const stderr = details["stderr"].split("\n");
-              return stdout.concat(stderr);
-            } else {
-              // syntax error etc
-              return result.split("\n");
-            }
-          } else {
-            // not complete yet
-            Deno.sleepSync(1000);
+          // build error
+          if (details["build_result"] === "failure") {
+            return details["build_stdout"].split("\n").concat(
+              details["build_stderr"].split("\n"),
+            );
           }
-        }
-      })();
 
+          const result = details["result"];
+          if (result === "success" || result === "faulure") {
+            // success execution
+            // execution error
+            const stdout = details["stdout"].split("\n");
+            const stderr = details["stderr"].split("\n");
+            content = stdout.concat(stderr);
+            break;
+          } else {
+            // syntax error etc
+            content = result.split("\n");
+            break;
+          }
+        } else {
+          // not complete yet
+          Deno.sleepSync(1000);
+        }
+      }
+
+      let opened = false;
+      let bufnr: number;
       const bufexists =
-        (await denops.eval(`bufexists("${config["bufname"]}")`)) 
-      console.log(bufexists)
+        (await denops.eval(`bufexists("${config["bufname"]}")`));
       if (bufexists) {
-        const bufnr = await denops.eval(
+        bufnr = await denops.eval(
           `bufnr("^${config["bufname"]}$")`,
         ) as number;
         const wins = await denops.eval(`win_findbuf(${bufnr})`) as number[];
-        const tabnr = await denops.eval("tabpagenr") as number;
-        const ww = await denops.eval(`filter(map(${wins}, "win_id2tabwin(v:val)"), "v:val[0] is# ${tabnr}")`)
-        console.log(bufnr, wins, tabnr, ww)
+        const tabnr = await denops.eval("tabpagenr()") as number;
+        const ww = await denops.eval(
+          `filter(map([${wins}], "win_id2tabwin(v:val)"), "v:val[0] is# ${tabnr}")`,
+        ) as number[][]; // [ [tabnr, winnr] ]
+        if (ww.length == 0) {
+          await execute(denops, `${opener} ${config["bufname"]}`);
+          opened = true;
+        } else {
+          await execute(denops, `${ww[0][1]} wincmd w`);
+        }
+      } else {
+        await execute(denops, `${opener} ${config["bufname"]}`);
+        await execute(
+          denops,
+          `
+          setlocal bufhidden=hide buftype=nofile noswapfile nobuflisted nomodified
+          setlocal fileformat=unix
+          `,
+        );
+        bufnr = await denops.eval(`bufnr("%")`) as number;
+        opened = true;
       }
 
-      const winwidth = await denops.eval("winwidth(0)");
-      const winheight = await denops.eval("winheight(0)");
-      ensureNumber(winwidth);
-      ensureNumber(winheight);
-      const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
+      if (await denops.eval("&filetype") as string !== config["filetype"]) {
+        await execute(denops, `setlocal filetype=${config["filetype"]}`);
+      }
 
-      await execute(denops, `${opener} ${config["bufname"]}`);
-      await denops.call("setline", 1, content);
-      await execute(
-        denops,
-        `
-        setlocal bufhidden=wipe buftype=nofile
-        setlocal nobackup noswapfile
-        setlocal nomodified nomodifiable
-        setlocal fileformat=unix
-        setlocal filetype=paizaIO
-        `,
-      );
+      // if (opened) {
+      await denops.call("deletebufline", bufnr, 1, "$");
+      // }
+
+      await denops.call("setbufline", bufnr, "$", content);
 
       return await Promise.resolve();
     },
