@@ -76,6 +76,48 @@ async function getDetails(id: number, apiKey = "guest") {
   return res.json();
 }
 
+function getLanguageName(filetype: string, isPython2 = false): string {
+  if (isPython2 && filetype === "python") {
+    return "Python2";
+  } else {
+    const ftList: Record<string, string> = {
+      c: "c",
+      cpp: "cpp",
+      objc: "objective-c",
+      java: "java",
+      kotlin: "kotlin",
+      scala: "scala",
+      swift: "swift",
+      cs: "csharp",
+      go: "go",
+      haskell: "haskell",
+      erlang: "erlang",
+      perl: "perl",
+      python: "python3",
+      ruby: "ruby",
+      php: "php",
+      sh: "bash",
+      r: "r",
+      javascript: "javascript",
+      coffeescript: "coffeescript",
+      vb: "vb",
+      cobol: "cobol",
+      fsharp: "fsharp",
+      d: "d",
+      clojure: "clojure",
+      elixir: "elixir",
+      sql: "mysql",
+      rust: "rust",
+      scheme: "scheme",
+      lisp: "commonlisp",
+      nadesiko: "nadesiko", // I dont know filetype of nadesiko in vim.
+      typescript: "typescript",
+      plain: "plain", // show given text
+    };
+    return ftList[filetype] || filetype;
+  }
+}
+
 export async function main(denops: Denops): Promise<void> {
   denops.dispatcher = {
     async paizaIO(): Promise<void> {
@@ -85,43 +127,12 @@ export async function main(denops: Denops): Promise<void> {
       const winwidth = await denops.eval("winwidth(0)") as number;
       const winheight = await denops.eval("winheight(0)") as number;
       const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
-      const ftList: Record<string, string> = {
-        c: "c",
-        cpp: "cpp",
-        objc: "objective-c",
-        java: "java",
-        kotlin: "kotlin",
-        scala: "scala",
-        swift: "swift",
-        cs: "csharp",
-        go: "go",
-        haskell: "haskell",
-        erlang: "erlang",
-        perl: "perl",
-        python: "python3",
-        ruby: "ruby",
-        php: "php",
-        sh: "bash",
-        r: "r",
-        javascript: "javascript",
-        coffeescript: "coffeescript",
-        vb: "vb",
-        cobol: "cobol",
-        fsharp: "fsharp",
-        d: "d",
-        clojure: "clojure",
-        elixir: "elixir",
-        sql: "mysql",
-        rust: "rust",
-        scheme: "scheme",
-        lisp: "commonlisp",
-        nadesiko: "nadesiko", // I dont know filetype of nadesiko in vim.
-        typescript: "typescript",
-        plain: "plain", // show given text
-      };
       const createStatus = await create(
         lines.join("\n"),
-        ftList[filetype] || filetype,
+        getLanguageName(
+          filetype,
+          await vars.g.get(denops, "paiza_io_python_is_two", false) as boolean,
+        ),
       );
       const runID = createStatus["id"];
       let content: string[];
