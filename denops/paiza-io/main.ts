@@ -169,22 +169,22 @@ export async function main(denops: Denops): Promise<void> {
         }
       }
 
-      let opened = false;
+      // let opened = false;
       let bufnr: number;
-      const bufexists =
-        (await denops.eval(`bufexists("${config["bufname"]}")`));
-      if (bufexists) {
-        bufnr = await denops.eval(
-          `bufnr("^${config["bufname"]}$")`,
-        ) as number;
-        const wins = await denops.eval(`win_findbuf(${bufnr})`) as number[];
-        const tabnr = await denops.eval("tabpagenr()") as number;
+      // const bufexists =
+      //   (await denops.eval(`bufexists("${config["bufname"]}")`));
+      const bufExist = await denops.call("bufexists", config["bufname"]);
+      if (bufExist) {
+        bufnr = await denops.call("bufnr", `^${config["bufname"]}$`) as number;
+        const wins = await denops.call("win_findbuf", bufnr) as number[];
+        const tabnr = await denops.call("tabpagenr") as number;
         const ww = await denops.eval(
           `filter(map([${wins}], "win_id2tabwin(v:val)"), "v:val[0] is# ${tabnr}")`,
-        ) as number[][]; // [ [tabnr, winnr] ]
+        ) as number[][]; // [ [tabnr, winnr] ] TODO replace map(), filter() in typescrit
+
         if (ww.length == 0) {
           await execute(denops, `${opener} ${config["bufname"]}`);
-          opened = true;
+          // opened = true;
         } else {
           await execute(denops, `${ww[0][1]} wincmd w`);
         }
@@ -193,12 +193,14 @@ export async function main(denops: Denops): Promise<void> {
         await execute(
           denops,
           `
-          setlocal bufhidden=hide buftype=nofile noswapfile nobuflisted nomodified
+          setlocal bufhidden=hide buftype=nofile
+          setlocal noswapfile nobuflisted
+          setlocal nomodified
           setlocal fileformat=unix
           `,
         );
-        bufnr = await denops.eval(`bufnr("%")`) as number;
-        opened = true;
+        bufnr = await denops.call("bufnr", "%") as number;
+        // opened = true;
       }
 
       if (await denops.eval("&filetype") as string !== config["filetype"]) {
