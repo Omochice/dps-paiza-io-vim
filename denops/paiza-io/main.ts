@@ -33,7 +33,7 @@ function filterUndefinded(
     .map(([key, value]) => [key, String(value)]);
   return Object.fromEntries(filtered);
 }
-//
+
 async function create(
   sourceCode: string,
   language: string,
@@ -71,7 +71,6 @@ async function getDetails(id: number, apiKey = "guest") {
   const url = baseUrl + "runners/get_details" + "?" +
     new URLSearchParams({ id: String(id), api_key: apiKey });
   const res = await fetch(url, {
-    // body: JSON.stringify({ id: id }),
     method: "GET",
   });
   return res.json();
