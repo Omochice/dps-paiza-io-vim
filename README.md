@@ -29,7 +29,7 @@ Run `:PaizaIO`, the code in current window is executed on web API and display th
 ## TODO
 
 - fix bugs
-    - After execution, if change window to other code and run `:PaizaIO` then show old result.
+    - ~~After execution, if change window to other code and run `:PaizaIO` then show old result.~~
     - ~~Each execution make new window every time.~~ Resolved by #2
 - add options
     - Switch Python2/3
