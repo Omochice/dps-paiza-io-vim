@@ -124,8 +124,8 @@ export async function main(denops: Denops): Promise<void> {
       const lastLine = await denops.call("line", "$") as number;
       const lines = await denops.call("getline", 1, lastLine) as string[];
       const filetype = await denops.eval("&filetype") as string;
-      const winwidth = await denops.eval("winwidth(0)") as number;
-      const winheight = await denops.eval("winheight(0)") as number;
+      const winwidth = await denops.call("winwidth", 0) as number;
+      const winheight = await denops.call("winheight", 0) as number;
       const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
       const createStatus = await create(
         lines.join("\n"),
