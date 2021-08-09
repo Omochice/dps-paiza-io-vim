@@ -182,14 +182,16 @@ export async function main(denops: Denops): Promise<void> {
         }
       }
 
-      // let opened = false;
-      let bufnr: number;
-      // const bufexists =
-      //   (await denops.eval(`bufexists("${config["bufname"]}")`));
+      let paizaBufnr: number;
+
       const bufExist = await denops.call("bufexists", config["bufname"]);
       if (bufExist) {
-        bufnr = await denops.call("bufnr", `^${config["bufname"]}$`) as number;
-        const wins = await denops.call("win_findbuf", bufnr);
+        // detect existing buffer
+        paizaBufnr = await denops.call(
+          "bufnr",
+          `^${config["bufname"]}$`,
+        ) as number;
+        const wins = await denops.call("win_findbuf", paizaBufnr);
         const tabnr = await denops.call("tabpagenr");
         ensureArray(wins, isNumber);
         ensureNumber(tabnr);
@@ -200,12 +202,14 @@ export async function main(denops: Denops): Promise<void> {
         ) as number[][]).filter((nr) => nr[0] == tabnr);
 
         if (ww.length == 0) {
+          // if not exist (but exist it on buffer), open it as window
           await execute(denops, `${opener} ${config["bufname"]}`);
-          // opened = true;
         } else {
+          // if exist, move its window
           await execute(denops, `${ww[0][1]} wincmd w`);
         }
       } else {
+        // if not exist, open it
         await execute(denops, `${opener} ${config["bufname"]}`);
         await execute(
           denops,
@@ -216,7 +220,7 @@ export async function main(denops: Denops): Promise<void> {
           setlocal fileformat=unix
           `,
         );
-        bufnr = await denops.call("bufnr", "%") as number;
+        paizaBufnr = await denops.call("bufnr", "%") as number;
         // opened = true;
       }
 
@@ -224,16 +228,17 @@ export async function main(denops: Denops): Promise<void> {
         await execute(denops, `setlocal filetype=${config["filetype"]}`);
       }
 
-      await denops.call("deletebufline", bufnr, 1, "$");
+      // delete exist content and write new content
+      await denops.call("deletebufline", paizaBufnr, 1, "$");
+      await denops.call("setbufline", paizaBufnr, "$", content);
 
-      await denops.call("setbufline", bufnr, "$", content);
-
+      // return original window
       const originWinnr = await denops.call(
         "win_id2win",
         await currentWinId as number,
       );
       ensureNumber(originWinnr);
-      await denops.cmd(`${originWinnr}wincmd w`);
+      await execute(denops, `${originWinnr}wincmd w`);
 
       return await Promise.resolve();
     },
