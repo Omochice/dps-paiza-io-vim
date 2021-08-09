@@ -178,9 +178,11 @@ export async function main(denops: Denops): Promise<void> {
         bufnr = await denops.call("bufnr", `^${config["bufname"]}$`) as number;
         const wins = await denops.call("win_findbuf", bufnr) as number[];
         const tabnr = await denops.call("tabpagenr") as number;
-        const ww = await denops.eval(
-          `filter(map([${wins}], "win_id2tabwin(v:val)"), "v:val[0] is# ${tabnr}")`,
-        ) as number[][]; // [ [tabnr, winnr] ] TODO replace map(), filter() in typescrit
+        const ww = (await denops.call(
+          "map",
+          wins,
+          "win_id2tabwin(v:val)",
+        ) as number[][]).filter((nr) => nr[0] == tabnr);
 
         if (ww.length == 0) {
           await execute(denops, `${opener} ${config["bufname"]}`);
