@@ -127,13 +127,19 @@ function getLanguageName(filetype: string, isPython2 = false): string {
 export async function main(denops: Denops): Promise<void> {
   denops.dispatcher = {
     async paizaIO(): Promise<void> {
-      const currentWinId = await denops.call("win_getid") as number;
-      const lastLine = await denops.call("line", "$") as number;
-      const lines = await denops.call("getline", 1, lastLine) as string[];
-      const filetype = await denops.eval("&filetype") as string;
-      const winwidth = await denops.call("winwidth", 0) as number;
-      const winheight = await denops.call("winheight", 0) as number;
+      const currentWinId = denops.call("win_getid");
+      const lastLine = await denops.call("line", "$");
+      ensureNumber(lastLine);
+      const lines = await denops.call("getline", 1, lastLine);
+      const filetype = await denops.eval("&filetype");
+      const winwidth = await denops.call("winwidth", 0);
+      const winheight = await denops.call("winheight", 0);
+      ensureNumber(winwidth);
+      ensureNumber(winheight);
       const opener = winwidth * 2 < winheight * 5 ? "split" : "vsplit";
+
+      ensureArray(lines, isString);
+      ensureString(filetype);
       const createStatus = await create(
         lines.join("\n"),
         getLanguageName(
@@ -183,8 +189,10 @@ export async function main(denops: Denops): Promise<void> {
       const bufExist = await denops.call("bufexists", config["bufname"]);
       if (bufExist) {
         bufnr = await denops.call("bufnr", `^${config["bufname"]}$`) as number;
-        const wins = await denops.call("win_findbuf", bufnr) as number[];
-        const tabnr = await denops.call("tabpagenr") as number;
+        const wins = await denops.call("win_findbuf", bufnr);
+        const tabnr = await denops.call("tabpagenr");
+        ensureArray(wins, isNumber);
+        ensureNumber(tabnr);
         const ww = (await denops.call(
           "map",
           wins,
@@ -216,17 +224,17 @@ export async function main(denops: Denops): Promise<void> {
         await execute(denops, `setlocal filetype=${config["filetype"]}`);
       }
 
-      // if (opened) {
       await denops.call("deletebufline", bufnr, 1, "$");
-      // }
 
       await denops.call("setbufline", bufnr, "$", content);
 
       const originWinnr = await denops.call(
         "win_id2win",
-        currentWinId,
+        await currentWinId as number,
       );
+      ensureNumber(originWinnr);
       await denops.cmd(`${originWinnr}wincmd w`);
+
       return await Promise.resolve();
     },
   };
