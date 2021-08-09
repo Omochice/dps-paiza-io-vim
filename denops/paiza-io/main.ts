@@ -121,6 +121,7 @@ function getLanguageName(filetype: string, isPython2 = false): string {
 export async function main(denops: Denops): Promise<void> {
   denops.dispatcher = {
     async paizaIO(): Promise<void> {
+      const currentWinId = await denops.call("win_getid") as number;
       const lastLine = await denops.call("line", "$") as number;
       const lines = await denops.call("getline", 1, lastLine) as string[];
       const filetype = await denops.eval("&filetype") as string;
@@ -215,6 +216,11 @@ export async function main(denops: Denops): Promise<void> {
 
       await denops.call("setbufline", bufnr, "$", content);
 
+      const originWinnr = await denops.call(
+        "win_id2win",
+        currentWinId,
+      );
+      await denops.cmd(`${originWinnr}wincmd w`);
       return await Promise.resolve();
     },
   };
