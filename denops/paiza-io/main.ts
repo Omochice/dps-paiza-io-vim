@@ -124,7 +124,7 @@ function getLanguageName(filetype: string, isPython2 = false): string {
   }
 }
 
-export async function main(denops: Denops): Promise<void> {
+export function main(denops: Denops): void {
   denops.dispatcher = {
     async paizaIO(): Promise<void> {
       const currentWinId = denops.call("win_getid");
@@ -243,9 +243,4 @@ export async function main(denops: Denops): Promise<void> {
       return await Promise.resolve();
     },
   };
-  await denops.cmd(
-    `
-    command! PaizaIO call denops#notify("${denops.name}", "paizaIO", [])
-    `,
-  );
 }
