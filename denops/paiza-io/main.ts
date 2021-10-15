@@ -1,13 +1,13 @@
-import { Denops } from "https://deno.land/x/denops_std@v1.0.0/mod.ts";
-import { execute } from "https://deno.land/x/denops_std@v1.0.0/helper/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v1.0.0/variable/mod.ts";
+import { Denops } from "https://deno.land/x/denops_std@v2.1.2/mod.ts";
+import { execute } from "https://deno.land/x/denops_std@v2.1.2/helper/mod.ts";
+import * as vars from "https://deno.land/x/denops_std@v2.1.2/variable/mod.ts";
 import {
   ensureArray,
   ensureNumber,
   ensureString,
   isNumber,
   isString,
-} from "https://deno.land/x/unknownutil@v0.1.1/mod.ts";
+} from "https://deno.land/x/unknownutil@v1.1.4/mod.ts";
 
 const baseUrl = "https://api.paiza.io/";
 const config = {
