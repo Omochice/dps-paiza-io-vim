@@ -1,6 +1,6 @@
-import { Denops } from "https://deno.land/x/denops_std@v3.3.1/mod.ts";
-import { execute } from "https://deno.land/x/denops_std@v3.3.1/helper/mod.ts";
-import * as vars from "https://deno.land/x/denops_std@v3.3.1/variable/mod.ts";
+import { Denops } from "https://deno.land/x/denops_std@v3.3.2/mod.ts";
+import { execute } from "https://deno.land/x/denops_std@v3.3.2/helper/mod.ts";
+import * as vars from "https://deno.land/x/denops_std@v3.3.2/variable/mod.ts";
 import {
   ensureArray,
   ensureNumber,
